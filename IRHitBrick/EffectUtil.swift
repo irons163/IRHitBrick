@@ -8,13 +8,6 @@
 import Foundation
 import SpriteKit
 
-//class EffectUtil: NSObject {
-//    func isHasTool() -> Bool { false }
-//    func getToolObj() -> ToolUtil { ToolUtil() }
-//    func getToolTimerThread() -> TimerThread { TimerThread() }
-//    func doEffectFinish(_ balls: [BallUtil]) {}
-//}
-
 final class EffectUtil: NSObject {
 
     // MARK: - Public properties
@@ -148,7 +141,6 @@ final class EffectUtil: NSObject {
     }
 
     // MARK: - Timer thread access
-    /// 對應 ObjC: - (TimerThread*)getToolTimerThread;
     @objc func getToolTimerThread() -> TimerThread? {
         return timerThread
     }
@@ -170,12 +162,10 @@ final class EffectUtil: NSObject {
 
     /// 對應 ObjC: - (void)startDownTool;
     @objc func startDownTool() {
-        // 需要 ToolUtil 具備 `isStartDownTool` 屬性
         toolUtil?.isStartDownTool = true
     }
 
     // MARK: - Finish / cleanup effects
-    /// 對應 ObjC: - (void)doEffectFinish:(NSMutableArray*) ballUtils;
     func doEffectFinish(_ ballUtils: inout [BallUtil]) {
         for b in ballUtils {
             b.setBallLevel(-5)
@@ -191,17 +181,14 @@ final class EffectUtil: NSObject {
     }
 
     // MARK: - Public getters
-    /// 對應 ObjC: - (int)getNeedHitCount;
     @objc func getNeedHitCount() -> Int {
         return needHitCount
     }
 
-    /// 對應 ObjC: - (bool)isHasTool;
     @objc func isHasTool() -> Bool {
         return toolUtil != nil
     }
 
-    /// 對應 ObjC: - (ToolUtil*)getToolObj;
     @objc func getToolObj() -> ToolUtil? {
         return toolUtil
     }

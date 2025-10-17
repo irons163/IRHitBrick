@@ -177,8 +177,8 @@ final class MyScene: SKScene, SKPhysicsContactDelegate {
     private var speedY: CGFloat = -15
     private var speedX: CGFloat = -15
 
-    private static var waitGameSuccessProcessing = false
-    private static var gameFlag = true
+    private var waitGameSuccessProcessing = false
+    private var gameFlag = true
 
     private var ball: BallUtil!
 
@@ -263,7 +263,7 @@ final class MyScene: SKScene, SKPhysicsContactDelegate {
 
         // ball vs bottom
         if firstBody.categoryBitMask == Constants.ballCategory && secondBody.categoryBitMask == Constants.bottomCategory {
-            if !Self.gameFlag { return }
+            if !gameFlag { return }
             if !gameSuccessFlag {
                 let maxLevel = UserDefaults.standard.integer(forKey: "level")
                 if maxLevel < MAX_LEVEL && playGameLevel >= maxLevel {
@@ -332,7 +332,7 @@ final class MyScene: SKScene, SKPhysicsContactDelegate {
             ball.physicsBody?.linearDamping = speed > maxSpeed ? 0.4 : 0.0
         }
         checkGameTime()
-        if !Self.gameFlag { return }
+        if !gameFlag { return }
 
         // move tools
         var i = 0
@@ -360,8 +360,7 @@ final class MyScene: SKScene, SKPhysicsContactDelegate {
             let tool = toolUtils[i]
             for ball in ballUtils {
                 if ball.calculateAccumulatedFrame().intersects(tool.calculateAccumulatedFrame()) {
-                    var balls = ballUtils
-                    tool.doTool(&balls, ball: ball, showToolEffectTime: &showToolEffectTime)
+                    if let eff = tool.doTool(&ballUtils, ball: ball) { showToolEffectTime.append(eff) }
                     tool.removeFromParent()
                     toolUtils.remove(at: i)
                     hit = true
@@ -595,14 +594,14 @@ final class MyScene: SKScene, SKPhysicsContactDelegate {
         gameTimeSingleDigitsCountNode.size = rectOnes.size
         gameTimeNode.size = rectS.size
 
-        if count == CHANGE_MUSIC_TIME && !Self.waitGameSuccessProcessing {
+        if count == CHANGE_MUSIC_TIME && !waitGameSuccessProcessing {
             // swap music here if needed
         }
 
         if count <= 0 && isFirstDoGameFinish {
             isFirstDoGameFinish = false
-            if Self.waitGameSuccessProcessing {
-                Self.waitGameSuccessProcessing = false
+            if waitGameSuccessProcessing {
+                waitGameSuccessProcessing = false
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                     self.showWinView()
                 }
@@ -611,8 +610,8 @@ final class MyScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func gameSuccess() {
-        Self.gameFlag = false
-        Self.waitGameSuccessProcessing = true
+        gameFlag = false
+        waitGameSuccessProcessing = true
         lastTimeCount = count
         paddle.isUserInteractionEnabled = false
         gameDelegate?.showWinDialog()
@@ -624,7 +623,7 @@ final class MyScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func gameOver() {
-        Self.gameFlag = false
+        gameFlag = false
         gameDelegate?.showLoseDialog(score: score)
         isPaused = true
     }
@@ -651,7 +650,7 @@ final class MyScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func countScore() {
-        if !Self.waitGameSuccessProcessing {
+        if !waitGameSuccessProcessing {
             increaseScroe += hitIronBrickLevelDownCount * BRICK_IRON_LEVEL_DOWN_SCORE
             increaseScroe += hitBrickLevelDownCount * BRICK_LEVEL_DOWN_SCORE
             increaseScroe += clearBrickCount * BRICK_CLEAR_SCORE
@@ -704,7 +703,7 @@ final class MyScene: SKScene, SKPhysicsContactDelegate {
         isBallLifeChange = false
         ballLifeShowBmpCount = BALL_LIFE_SHOW_COUNT
         ball_isRun = true
-        Self.gameFlag = true
+        gameFlag = true
 
         bitmapUtil = .sharedInstance
         ballViewConfig = .sharedInstance
@@ -743,11 +742,11 @@ final class MyScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func tick() {
-        if !Self.gameFlag { timer?.invalidate(); timer = nil }
+        if !gameFlag { timer?.invalidate(); timer = nil }
         if isPaused { return }
         if count < 0 { gameOver(); return }
-        if Self.gameFlag && !Self.waitGameSuccessProcessing { count -= 1 }
-        else if Self.waitGameSuccessProcessing {
+        if gameFlag && !waitGameSuccessProcessing { count -= 1 }
+        else if waitGameSuccessProcessing {
             ball_isRun = false
             gameOver()
         }
@@ -818,6 +817,7 @@ final class MyScene: SKScene, SKPhysicsContactDelegate {
 
     // 安全清空兩組效果：倒序刪除，並把對應節點從場景移除
     private func clearEffectLists() {
+        precondition(Thread.isMainThread)
         // ---- Tool effects: 成對彈出，確保同步 ----
         while let nodes = showToolEffectTimeNodes.popLast(),
               let tool  = showToolEffectTime.popLast() {

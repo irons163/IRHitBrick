@@ -104,7 +104,7 @@ class ViewController: UIViewController, GameDelegate {
         } else if level + 1 == MAX_LEVEL {
 
         }
-        
+
         if let skView = self.view as? SKView {
             Self.scene = MyScene.make(size: skView.bounds.size, playGameLevel: level + 1, with: self)
             Self.scene?.scaleMode = .aspectFill

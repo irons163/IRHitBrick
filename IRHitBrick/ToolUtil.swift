@@ -97,8 +97,10 @@ final class ToolUtil: SKSpriteNode {
         }
     }
 
-    func doTool(_ ballUtils: inout [BallUtil], ball: BallUtil, showToolEffectTime: inout [ToolUtil]) {
-        guard let ballView = ballView else { return }
+    
+    @discardableResult
+    func doTool(_ ballUtils: inout [BallUtil], ball: BallUtil) -> ToolUtil? {
+        guard let ballView = ballView else { return nil }
         self.ball = ball
 
         switch whichToolType {
@@ -110,7 +112,7 @@ final class ToolUtil: SKSpriteNode {
             }
             timerThread = TimerThread(time: 10)
             timerThread?.start()
-            showToolEffectTime.append(self)
+            return self
 
         case .ballSpeedDown:
             ball.setSpeedX(ball.getSpeedX() / 2)
@@ -120,23 +122,22 @@ final class ToolUtil: SKSpriteNode {
             }
             timerThread = TimerThread(time: 10)
             timerThread?.start()
-            showToolEffectTime.append(self)
+            return self
 
         case .stickLongUp:
             ballView.setStickLong(ballView.getStickLong() * 1.5)
             timerThread = TimerThread(time: 10)
             timerThread?.start()
-            showToolEffectTime.append(self)
+            return self
 
         case .stickLongDown:
             ballView.setStickLong(ballView.getStickLong() * 0.5)
             timerThread = TimerThread(time: 10)
             timerThread?.start()
-            showToolEffectTime.append(self)
+            return self
 
         case .ballCountUpToThree:
-            for i in ballUtils.count..<3 {
-                _ = i // 僅為符合原邏輯，實際不使用
+            for _ in ballUtils.count..<3 {
                 let newBall = BallUtil.initBallUtil(0, speedX: 0, speedY: 0, imageX: 0, imageY: 0, fAngle: 0, RADIUS: 10)
                 ballUtils.append(newBall)
                 newBall.name = ball.name
@@ -152,45 +153,52 @@ final class ToolUtil: SKSpriteNode {
                 newBall.physicsBody?.categoryBitMask = ball.physicsBody?.categoryBitMask ?? 0
                 newBall.physicsBody?.contactTestBitMask = ball.physicsBody?.contactTestBitMask ?? 0
             }
+            return nil
 
         case .lifeUp:
             ballView.setBallLife(ballView.getBallLife() + 1)
+            return nil
 
         case .ballReset:
-            ballView.resetBall()
+            DispatchQueue.main.async { [weak ballView] in ballView?.resetBall() }
+            return nil
 
         case .stickLongMax:
             saveStickLong = ballView.getStickLong()
-            ballView.setStickLong(ballView.size.width) // 充滿寬度
+            ballView.setStickLong(ballView.size.width)
             timerThread = TimerThread(time: 10)
             timerThread?.start()
-            showToolEffectTime.append(self)
+            return self
 
         case .ballRadiusUp:
             ball.xScale = 1.5
             ball.yScale = 1.5
             timerThread = TimerThread(time: 10)
             timerThread?.start()
-            showToolEffectTime.append(self)
+            return self
 
         case .ballRadiusDown:
             ball.xScale = 0.5
             ball.yScale = 0.5
             timerThread = TimerThread(time: 10)
             timerThread?.start()
-            showToolEffectTime.append(self)
+            return self
 
         case .blackHole:
             ball.setBallLevel(-5)
+            return nil
 
         case .ballLevelUpTwice:
             let next = (ball.getBallLevel() > 0) ? -1 : (ball.getBallLevel() + 2)
             ball.setBallLevel(next)
+            return nil
 
         case .ballLevelDownOnce:
             ball.setBallLevel(ball.getBallLevel() - 1)
+            return nil
         }
     }
+
 
     func doToolFinish() {
         guard let ballView = ballView, let ball = ball else { return }
@@ -230,6 +238,8 @@ final class ToolUtil: SKSpriteNode {
         default:
             break
         }
+        return
+
     }
 
     func getToolTimerThread() -> TimerThread? {

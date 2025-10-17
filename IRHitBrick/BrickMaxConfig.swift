@@ -81,7 +81,6 @@ class BrickMaxConfig {
             break
         }
 
-        // 依序填入陣列（與 ObjC 相同）
         bricksMax[0] = brickOnceMax
         bricksMax[1] = brickTwiceMax
         bricksMax[2] = brickThreeMax
@@ -91,8 +90,6 @@ class BrickMaxConfig {
         bricksMax[6] = brickBallLevelUpMax
     }
 
-    // - (bool)isBrickOverMax:(int)whichBrickType;
-    // whichBrickType: 0..6
     func isBrickOverMax(_ whichBrickType: Int32) -> Bool {
         let idx = Int(whichBrickType)
         guard idx >= 0 && idx < bricksMax.count else { return true }
@@ -104,7 +101,6 @@ class BrickMaxConfig {
         }
     }
 
-    // - (bool)isBrickMaxConfigEnable;
     func isBrickMaxConfigEnable() -> Bool {
         return brickMaxConfigEnable
     }
